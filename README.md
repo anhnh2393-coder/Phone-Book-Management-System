@@ -1,54 +1,42 @@
 # Phone Book Management System
 
 ## 1. Project Overview
-The **Phone Book Management System** is designed to help users store, search, update, delete, and manage contact information efficiently.
+The **Phone Book Management System** được thiết kế giúp người dùng lưu trữ, tìm kiếm, cập nhật, xóa, và quản lý thông tin liên lạc một cách hiệu quả. 
 
-## 2. Main Features
-- Add a new contact
-- View contact list
-- Search for a contact
-- Update contact information
-- Delete a contact
-- Organize and manage phone book data
+## 🛠️ Công cụ sử dụng (Tools & Tech Stack)
 
-## 3. Project Structure
-
-```text
-Phone-Book-Management-System/
-├── README.md
-├── Docs/
-│   ├── Project_Description.md
-│   ├── Functional_Requirements.md
-│   ├── Use_Case_Specification.md
-│   └── Group_Work_Distribution.md
-├── Diagrams/
-│   ├── Use_Case_Diagram.drawio
-│   ├── Class_Diagram.drawio
-│   ├── Context_Diagram.drawio
-│   └── README.md
-├── Source_Code/
-│   └── README.md
-└── Images/
-    └── README.md
-```
-
-## 4. Actors
-| No. | Actor | Description |
-|---|---|---|
-| 1 | User | Uses the system to manage personal contacts. |
-
-## 5. Team Collaboration
-Each team member should work on their assigned files and commit changes with a clear message.
-
-Example:
-```text
-Add use case specification
-Update functional requirements
-Upload class diagram
-```
-
-## 6. Technologies
-The implementation technology can be added here when the development phase begins.
+* **Quản lý dự án & Tài liệu:** GitHub
+* **Vẽ sơ đồ & Thiết kế:** [diagrams.net (Draw.io)](https://app.diagrams.net/)
+* **Lập trình (IDE):** VS Code / Visual Studio / PyCharm / Eclipse
+* **Kiểm thử (Testing):** Microsoft Excel
+* **Theo dõi lỗi (Bug Tracking):** Jira / Bugzilla / Mantis
+* **Đóng gói & Triển khai:** Docker
 
 ---
-**Course Project: Phone Book Management System**
+
+## 📂 Cấu trúc Tài liệu Dự án (Document Structure)
+
+Tài liệu thiết kế chi tiết của hệ thống được lưu trữ trong thư mục `docs/`:
+
+### Stage 1 – Analysis & Specification of Requirements
+* **Functional Requirements:** Mô tả các chức năng cốt lõi
+* **Non-Functional Requirements:** Yêu cầu về hiệu năng, bảo mật, giao diện người dùng.
+* **Diagrams:**
+  * Data Flow Diagram (DFD)
+  * Use Case Diagram
+  * Class Diagram
+
+### Stage 2 – Design
+* **Data Model:** Thiết kế CSDL (Định nghĩa các bảng, Primary Keys, Foreign Keys).
+* **Interface Design Description:** Thiết kế giao diện người dùng (UI Web/Console).
+
+### Stage 3 – Implementation
+* **Source Code:** Mã nguồn chương trình (Python / C++ / Java).
+* **Environment:** Hướng dẫn cấu hình môi trường và triển khai Docker.
+
+### Stage 4 – Testing & Bug Management
+* **Test Cases:** Bộ kịch bản kiểm thử chi tiết.
+* **Bug Tracking:** Quản lý và theo dõi lỗi hệ thống.
+
+---
+
