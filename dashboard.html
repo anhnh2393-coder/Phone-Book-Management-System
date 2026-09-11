@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Phone Book | Contacts</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body class="contacts-page">
+  <aside class="sidebar">
+    <div class="sidebar-brand"><span class="sidebar-logo">▣</span><span><strong>Phone Book</strong><small>Management System</small></span></div>
+    <div class="profile"><span class="avatar user-avatar">A</span><span><strong>admin</strong><small>admin@university.edu</small></span></div>
+    <nav class="side-nav" aria-label="Main navigation">
+      <button class="side-link active" data-view="contacts"><span>♧</span>Contacts<b id="contactCount">8</b></button>
+      <button class="side-link" data-view="favorites"><span>☆</span>Favorites<b id="favoriteCount">4</b></button>
+      <button class="side-link" data-view="groups"><span>⊞</span>Groups</button>
+      <button class="side-link" data-view="statistics"><span>▥</span>Statistics</button>
+      <button class="side-link" data-view="about"><span>ⓘ</span>About</button>
+    </nav>
+    <div class="sidebar-footer"><a href="/login">↪ &nbsp;Logout</a><small>University Project - 2026</small></div>
+  </aside>
+
+  <main class="contacts-main">
+    <header class="contacts-header">
+      <div><h1 id="pageTitle">Contacts</h1><p id="pageMeta">8 total · 8 shown</p></div>
+      <button class="add-contact-button" id="openAdd"><i class="fa-solid fa-plus" aria-hidden="true"></i> Add Contact</button>
+    </header>
+    <section class="toolbar" aria-label="Contact filters">
+      <label class="search-box"><span>⌕</span><input id="searchInput" type="search" placeholder="Search by name, phone, or email..."></label>
+      <label class="select-box"><select id="groupFilter"><option value="all">All Groups</option><option>Friends</option><option>Work</option><option>Family</option><option>University</option></select><span>⌄</span></label>
+      <button class="favorite-filter" id="favoriteFilter"><span>★</span> Favorites only</button>
+    </section>
+
+    <section class="table-card">
+      <div class="table-head"><span>NAME</span><span>PHONE NUMBER(S)</span><span>EMAIL</span><span>GROUP</span><span>FAV</span><span>ACTIONS</span></div>
+      <div id="contactRows"></div>
+      <div class="empty-state" id="emptyState" hidden>No contacts match your search.</div>
+    </section>
+    <section id="viewContent" hidden></section>
+  </main>
+
+  <div class="modal-backdrop" id="modalBackdrop" hidden>
+    <section class="contact-modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <button class="close-modal" id="closeModal" aria-label="Close">×</button>
+      <h2 id="modalTitle">Add contact</h2><p>Keep your phone book up to date.</p>
+      <form id="contactForm">
+        <input type="hidden" id="contactId">
+        <label>Name<input id="contactName" required placeholder="Full name"></label>
+        <label>Phone<input id="contactPhone" required placeholder="+1 555-0000"></label>
+        <label>Email<input id="contactEmail" type="email" required placeholder="name@example.com"></label>
+        <label>Group<select id="contactGroup"><option>Friends</option><option>Work</option><option>Family</option><option>University</option></select></label>
+        <div class="modal-actions"><button type="button" class="cancel-button" id="cancelModal">Cancel</button><button class="save-button" type="submit">Save contact</button></div>
+      </form>
+    </section>
+  </div>
+
+  <div class="toast" id="toast" role="status"></div>
+  <script>
+    const contacts = [
+      { id: 1, name: 'Alice Johnson', initials: 'AJ', phone: '+1 555-0101', extra: '+1 more', email: 'alice@example.com', group: 'Friends', favorite: true },
+      { id: 2, name: 'Bob Smith', initials: 'BS', phone: '+1 555-0201', extra: '', email: 'bob.smith@work.com', group: 'Work', favorite: false },
+      { id: 3, name: 'Carol White', initials: 'CW', phone: '+1 555-0301', extra: '+1 more', email: 'carol@family.net', group: 'Family', favorite: true },
+      { id: 4, name: 'David Lee', initials: 'DL', phone: '+1 555-0401', extra: '', email: 'david.lee@uni.edu', group: 'University', favorite: false },
+      { id: 5, name: 'Emma Davis', initials: 'ED', phone: '+1 555-0501', extra: '+1 more', email: 'emma.d@work.com', group: 'Work', favorite: true },
+      { id: 6, name: 'Frank Miller', initials: 'FM', phone: '+1 555-0601', extra: '', email: 'frank.m@family.net', group: 'Family', favorite: false },
+      { id: 7, name: 'Grace Wilson', initials: 'GW', phone: '+1 555-0701', extra: '', email: 'grace.w@uni.edu', group: 'University', favorite: true },
+      { id: 8, name: 'Henry Brown', initials: 'HB', phone: '+1 555-0801', extra: '+1 more', email: 'henry.b@friends.net', group: 'Friends', favorite: false }
+    ];
+    let favoritesOnly = false;
+    let activeView = 'contacts';
+    const rows = document.getElementById('contactRows');
+    const search = document.getElementById('searchInput');
+    const groupFilter = document.getElementById('groupFilter');
+    const emptyState = document.getElementById('emptyState');
+    const modal = document.getElementById('modalBackdrop');
+    const form = document.getElementById('contactForm');
+    const viewContent = document.getElementById('viewContent');
+    const contactsView = document.querySelector('.contacts-header');
+    const contactsToolbar = document.querySelector('.toolbar');
+    const contactsTable = document.querySelector('.table-card');
+
+    function visibleContacts() {
+      const term = search.value.toLowerCase().trim();
+      return contacts.filter(contact => {
+        const matchesText = [contact.name, contact.phone, contact.email].join(' ').toLowerCase().includes(term);
+        const matchesGroup = groupFilter.value === 'all' || contact.group === groupFilter.value;
+        const matchesFavorite = !favoritesOnly || contact.favorite;
+        const matchesView = activeView !== 'favorites' || contact.favorite;
+        return matchesText && matchesGroup && matchesFavorite && matchesView;
+      });
+    }
+
+    function render() {
+      const filtered = visibleContacts();
+      rows.innerHTML = filtered.map(contact => `
+        <div class="contact-row">
+          <div class="person-cell"><span class="avatar">${contact.initials}</span><strong>${contact.name}</strong></div>
+          <div class="phone-cell"><span>${contact.phone}</span>${contact.extra ? `<small>${contact.extra}</small>` : ''}</div>
+          <span class="email-cell">${contact.email}</span>
+          <span class="group-pill ${contact.group.toLowerCase()}">${contact.group}</span>
+          <button class="star-button ${contact.favorite ? 'is-favorite' : ''}" data-action="favorite" data-id="${contact.id}" aria-label="Toggle favorite">★</button>
+          <div class="action-buttons"><button data-action="view" data-id="${contact.id}" aria-label="View contact" title="View contact"><i class="fa-solid fa-eye" aria-hidden="true"></i></button><button data-action="edit" data-id="${contact.id}" aria-label="Edit contact" title="Edit contact"><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i></button><button data-action="delete" data-id="${contact.id}" aria-label="Delete contact" title="Delete contact"><i class="fa-solid fa-trash" aria-hidden="true"></i></button></div>
+        </div>`).join('');
+      emptyState.hidden = filtered.length !== 0;
+      document.getElementById('contactCount').textContent = contacts.length;
+      document.getElementById('favoriteCount').textContent = contacts.filter(item => item.favorite).length;
+      document.getElementById('pageMeta').textContent = `${contacts.length} total · ${filtered.length} shown`;
+    }
+
+    function groupClass(group) { return group.toLowerCase(); }
+
+    function renderFavorites() {
+      const favorites = contacts.filter(contact => contact.favorite);
+      viewContent.innerHTML = `<div class="view-grid">${favorites.map(contact => `<article class="favorite-card"><div class="card-person"><span class="avatar">${contact.initials}</span><strong>${contact.name}</strong><button class="star-button is-favorite" data-card-action="favorite" data-id="${contact.id}">★</button></div><span class="group-pill ${groupClass(contact.group)}">${contact.group}</span><div class="card-details"><span>♧ &nbsp;${contact.phone} <small>(Mobile)</small></span><span>✉ &nbsp;${contact.email}</span></div></article>`).join('')}</div>`;
+    }
+
+    function renderGroups() {
+      const groups = ['Friends', 'Family', 'Work', 'University', 'Other'];
+      viewContent.innerHTML = `<div class="group-tabs">${['All', ...groups].map(group => `<button class="group-tab ${group === 'All' ? 'active' : ''}" data-group-view="${group}">${group}${group !== 'All' ? ` (${contacts.filter(item => item.group === group).length})` : ''}</button>`).join('')}</div><div class="group-grid">${groups.map(group => { const items = contacts.filter(contact => contact.group === group); return `<article class="group-card ${groupClass(group)}"><header><strong><i></i>${group}</strong><span>${items.length} contacts</span></header>${items.length ? items.map(contact => `<div class="group-person"><span class="avatar">${contact.initials}</span><span><strong>${contact.name}</strong><small>${contact.phone}</small></span><button class="star-button ${contact.favorite ? 'is-favorite' : ''}" data-card-action="favorite" data-id="${contact.id}">★</button><span>✉</span></div>`).join('') : '<p class="no-group">No contacts in this group.</p>'}</article>`; }).join('')}</div>`;
+    }
+
+    function filterGroupCards(group) {
+      document.querySelectorAll('.group-card').forEach(card => { card.hidden = group !== 'All' && !card.classList.contains(groupClass(group)); });
+      document.querySelectorAll('.group-tab').forEach(tab => tab.classList.toggle('active', tab.dataset.groupView === group));
+    }
+
+    function renderStatistics() {
+      const groups = ['Friends', 'Family', 'Work', 'University', 'Other'];
+      const withMultiple = contacts.filter(contact => contact.extra).length;
+      viewContent.innerHTML = `<div class="stat-cards"><article><strong>${contacts.length}</strong><span>Total Contacts</span></article><article><strong>${contacts.filter(item => item.favorite).length}</strong><span>Favorites</span></article><article><strong>${withMultiple}</strong><span>Multiple Phones</span></article><article><strong>${contacts.filter(item => item.email).length}</strong><span>With Email</span></article></div><div class="stat-columns"><article class="info-card"><h3>CONTACTS BY GROUP</h3>${groups.map(group => { const count = contacts.filter(item => item.group === group).length; return `<div class="progress-line"><span>${group}<b>${count} (${contacts.length ? Math.round(count / contacts.length * 100) : 0}%)</b></span><i class="${groupClass(group)}" style="width:${contacts.length ? count / contacts.length * 100 : 0}%"></i></div>`; }).join('')}</article><article class="info-card"><h3>DATA COMPLETENESS</h3>${[['With Email', contacts.filter(item => item.email).length], ['With Multiple Phones', withMultiple], ['Marked as Favorite', contacts.filter(item => item.favorite).length], ['With Address', contacts.length], ['With Notes', contacts.length]].map(([label, count]) => `<div class="progress-line completeness"><span>${label}<b>${count} / ${contacts.length}</b></span><i style="width:${contacts.length ? count / contacts.length * 100 : 0}%"></i></div>`).join('')}</article></div><article class="info-card distribution"><h3>GROUP DISTRIBUTION - VISUAL</h3><div class="bars">${groups.map(group => { const count = contacts.filter(item => item.group === group).length; return `<div><b>${count}</b><i class="${groupClass(group)}" style="height:${Math.max(count * 40, 3)}px"></i><span>${group}</span></div>`; }).join('')}</div></article>`;
+    }
+
+    function renderAbout() {
+      viewContent.innerHTML = `<div class="about-stack"><article class="info-card about-intro"><span class="about-logo">▣</span><div><h2>Phone Book Management System</h2><p>University Project · 2026</p><span class="mini-tag">Version 1.0</span><span class="mini-tag green">Desktop Web App</span></div><hr><p>A complete desktop web application for managing personal and professional contacts. Built to demonstrate practical software engineering principles - CRUD operations, input validation, state management, authentication, and responsive desktop UI design.</p></article><article class="info-card account-card"><h3>LOGGED-IN ACCOUNT</h3><div class="account-row"><span class="avatar">A</span><span><strong>admin</strong><small>admin@university.edu</small></span></div></article><article class="info-card"><h3>SYSTEM FEATURES</h3><div class="feature-grid">${['Contact Management','Search & Filter','Favorites','Groups','Statistics','Validation & Duplicates','User Registration','Logout & Session'].map(feature => `<div><b>✓</b><span><strong>${feature}</strong><small>Manage and organize your phone book data with a clean interface.</small></span></div>`).join('')}</div></article><article class="info-card tech-card"><h3>TECHNICAL STACK</h3><div><span>HTML5</span><span>CSS3</span><span>JavaScript</span><span>C++ WinSock</span></div></article></div>`;
+    }
+
+    function switchView(view) {
+      activeView = view;
+      const isContacts = view === 'contacts';
+      contactsView.hidden = false;
+      document.getElementById('openAdd').hidden = !isContacts;
+      contactsToolbar.hidden = !isContacts;
+      contactsTable.hidden = !isContacts;
+      viewContent.hidden = isContacts;
+      document.getElementById('pageTitle').textContent = view[0].toUpperCase() + view.slice(1);
+      document.getElementById('pageMeta').textContent = view === 'favorites' ? `${contacts.filter(item => item.favorite).length} starred contacts` : view === 'contacts' ? `${contacts.length} total · ${visibleContacts().length} shown` : view === 'groups' ? `5 groups · ${contacts.length} total contacts` : view === 'statistics' ? 'Overview of your phone book data' : 'Phone Book Management System';
+      if (view === 'favorites') renderFavorites();
+      if (view === 'groups') renderGroups();
+      if (view === 'statistics') renderStatistics();
+      if (view === 'about') renderAbout();
+    }
+
+    function showModal(contact) {
+      document.getElementById('modalTitle').textContent = contact ? 'Edit contact' : 'Add contact';
+      document.getElementById('contactId').value = contact ? contact.id : '';
+      document.getElementById('contactName').value = contact ? contact.name : '';
+      document.getElementById('contactPhone').value = contact ? contact.phone : '';
+      document.getElementById('contactEmail').value = contact ? contact.email : '';
+      document.getElementById('contactGroup').value = contact ? contact.group : 'Friends';
+      modal.hidden = false;
+      document.getElementById('contactName').focus();
+    }
+
+    function hideModal() { modal.hidden = true; form.reset(); }
+    function notify(message) { const toast = document.getElementById('toast'); toast.textContent = message; toast.classList.add('visible'); setTimeout(() => toast.classList.remove('visible'), 2200); }
+
+    async function loadContacts() {
+      try {
+        const response = await fetch('/api/contacts');
+        if (!response.ok) throw new Error('Could not load contacts');
+        const savedContacts = await response.json();
+        contacts.splice(0, contacts.length, ...savedContacts.map(contact => ({
+          ...contact,
+          initials: contact.name.split(' ').map(word => word[0]).join('').slice(0, 2).toUpperCase(),
+          extra: ''
+        })));
+        render();
+      } catch (error) {
+        notify('Could not load saved contacts');
+      }
+    }
+
+    document.getElementById('openAdd').onclick = () => showModal();
+    document.getElementById('closeModal').onclick = hideModal;
+    document.getElementById('cancelModal').onclick = hideModal;
+    modal.onclick = event => { if (event.target === modal) hideModal(); };
+    search.oninput = render;
+    groupFilter.onchange = render;
+    document.getElementById('favoriteFilter').onclick = event => { favoritesOnly = !favoritesOnly; event.currentTarget.classList.toggle('selected', favoritesOnly); render(); };
+    rows.onclick = event => {
+      const button = event.target.closest('button');
+      if (!button) return;
+      const contact = contacts.find(item => item.id === Number(button.dataset.id));
+      if (button.dataset.action === 'favorite') { contact.favorite = !contact.favorite; render(); }
+      if (button.dataset.action === 'edit') showModal(contact);
+      if (button.dataset.action === 'view') notify(`${contact.name} · ${contact.phone}`);
+      if (button.dataset.action === 'delete' && confirm(`Delete ${contact.name}?`)) { contacts.splice(contacts.indexOf(contact), 1); render(); notify('Contact deleted'); }
+    };
+    form.onsubmit = async event => {
+      event.preventDefault();
+      const id = Number(document.getElementById('contactId').value);
+      const data = { name: document.getElementById('contactName').value, phone: document.getElementById('contactPhone').value, email: document.getElementById('contactEmail').value, group: document.getElementById('contactGroup').value };
+      if (id) {
+        Object.assign(contacts.find(item => item.id === id), data);
+      } else {
+        try {
+          const response = await fetch('/api/contacts', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams(data) });
+          if (!response.ok) throw new Error('Could not save contact');
+          await loadContacts();
+        } catch (error) {
+          notify('Could not save contact');
+          return;
+        }
+      }
+      hideModal(); render(); notify(id ? 'Contact updated' : 'Contact added');
+    };
+    viewContent.onclick = event => {
+      const groupTab = event.target.closest('[data-group-view]');
+      if (groupTab) { filterGroupCards(groupTab.dataset.groupView); return; }
+      const button = event.target.closest('[data-card-action]');
+      if (!button) return;
+      const contact = contacts.find(item => item.id === Number(button.dataset.id));
+      if (button.dataset.cardAction === 'favorite') { contact.favorite = !contact.favorite; render(); switchView(activeView); }
+    };
+    document.querySelectorAll('.side-link').forEach(link => link.onclick = () => { document.querySelectorAll('.side-link').forEach(item => item.classList.remove('active')); link.classList.add('active'); switchView(link.dataset.view); });
+    render();
+    loadContacts();
+  </script>
+</body>
+</html>

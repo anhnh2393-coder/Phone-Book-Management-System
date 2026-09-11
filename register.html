@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Phone Book | Register</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <main class="app-shell">
+    <section class="intro-panel">
+      <header class="brand"><span class="brand-icon">▣</span><span><strong>Phone Book</strong><small>Management System</small></span></header>
+      <div class="intro-content"><p class="overline">University Project - 2026</p><h1>Your contacts,<br><span>all in one place.</span></h1><p class="intro-copy">Create your account and manage personal and professional contacts from a single clean interface.</p></div>
+      <footer class="copyright">© 2026 University Project. All rights reserved.</footer>
+    </section>
+    <section class="auth-panel">
+      <div class="auth-content">
+        <nav class="auth-tabs"><a class="tab" href="/login">Sign In</a><a class="tab active" href="/register">Register</a></nav>
+        <div class="login-card">
+          <h2>Create account</h2><p class="subtitle">Register to start your phone book.</p>
+          <form action="/register" method="post">
+            <label for="name">FULL NAME</label><div class="input-box"><span>♙</span><input id="name" name="name" type="text" placeholder="Your name" required></div>
+            <label for="email">EMAIL</label><div class="input-box"><span>@</span><input id="email" name="email" type="email" placeholder="you@example.com" required></div>
+            <label for="password">PASSWORD</label><div class="input-box"><span>▢</span><input id="password" name="password" type="password" placeholder="Create a password" required></div>
+            <button class="submit-button" type="submit">Register</button>
+          </form>
+        </div>
+        <p class="panel-copyright">© 2026 University Project. All rights reserved.</p>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

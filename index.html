@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Phone Book | Sign In</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app-shell">
+    <section class="intro-panel">
+      <header class="brand">
+        <span class="brand-icon" aria-hidden="true">▣</span>
+        <span><strong>Phone Book</strong><small>Management System</small></span>
+      </header>
+
+      <div class="intro-content">
+        <p class="overline">University Project - 2026</p>
+        <h1>Your contacts,<br><span>all in one place.</span></h1>
+        <p class="intro-copy">A complete desktop contact management application — search, organize and manage all personal and professional contacts from a single clean interface.</p>
+        <div class="feature-list">
+          <span>✓ CRUD Operations</span>
+          <span>✓ Group Management</span>
+          <span>✓ Favorites</span>
+          <span>✓ Statistics</span>
+          <span>✓ Search &amp; Filter</span>
+          <span>✓ Data Validation</span>
+        </div>
+      </div>
+
+      <footer class="copyright">© 2026 University Project. All rights reserved.</footer>
+    </section>
+
+    <section class="auth-panel">
+      <div class="auth-content">
+        <nav class="auth-tabs" aria-label="Authentication">
+          <a class="tab active" href="/login">Sign In</a>
+          <a class="tab" href="/register">Register</a>
+        </nav>
+
+        <div class="login-card">
+          <h2>Welcome back</h2>
+          <p class="subtitle">Sign in to access your phone book.</p>
+          <form action="/login" method="post" onsubmit="submitLogin(event)">
+            <label for="username">USERNAME OR EMAIL</label>
+            <div class="input-box">
+              <span aria-hidden="true">♙</span>
+              <input id="username" name="username" type="text" placeholder="e.g. admin" autocomplete="username" required>
+            </div>
+
+            <label for="password">PASSWORD</label>
+            <div class="input-box">
+              <span aria-hidden="true">▢</span>
+              <input id="password" name="password" type="password" placeholder="Enter your password" autocomplete="current-password" required>
+              <button class="show-password" type="button" onclick="togglePassword()" aria-label="Show password">◉</button>
+            </div>
+
+            <div class="form-options">
+              <label class="remember"><input type="checkbox" name="remember"><span></span>Remember me</label>
+              <a href="#">Forgot password?</a>
+            </div>
+            <button class="submit-button" type="submit">Sign In</button>
+          </form>
+        </div>
+        <p class="panel-copyright">© 2026 University Project. All rights reserved.</p>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    function togglePassword() {
+      const password = document.getElementById('password');
+      password.type = password.type === 'password' ? 'text' : 'password';
+    }
+
+    function submitLogin(event) {
+      if (window.location.port !== '8080') event.preventDefault();
+    }
+  </script>
+</body>
+</html>
