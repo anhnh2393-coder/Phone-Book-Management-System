@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Phone Book | Admin</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body class="admin-page">
+  <aside class="admin-sidebar">
+    <div class="admin-brand"><span class="admin-brand-icon"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i></span><span><strong>Phone Book</strong><small>Administration</small></span></div>
+    <div class="admin-profile"><span class="admin-avatar">A</span><span><strong>admin</strong><small>Administrator</small></span></div>
+    <nav class="admin-nav" aria-label="Admin navigation">
+      <a class="admin-nav-link active" href="/admin"><i class="fa-solid fa-users" aria-hidden="true"></i> Users</a>
+    </nav>
+    <a class="admin-logout" href="/login"><i class="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i> Logout</a>
+  </aside>
+
+  <main class="admin-main">
+    <header class="admin-header">
+      <div><p class="admin-eyebrow">ADMINISTRATION</p><h1>User management</h1><p>View and manage registered accounts.</p></div>
+      <span class="admin-status"><i class="fa-solid fa-circle" aria-hidden="true"></i> System online</span>
+    </header>
+
+    <section class="admin-stats" aria-label="User statistics">
+      <article><span class="admin-stat-icon blue"><i class="fa-solid fa-users" aria-hidden="true"></i></span><div><strong id="totalUsers">0</strong><small>Total users</small></div></article>
+      <article><span class="admin-stat-icon purple"><i class="fa-solid fa-user-shield" aria-hidden="true"></i></span><div><strong id="adminUsers">0</strong><small>Administrators</small></div></article>
+      <article><span class="admin-stat-icon green"><i class="fa-solid fa-user-check" aria-hidden="true"></i></span><div><strong id="regularUsers">0</strong><small>Regular users</small></div></article>
+      <article><span class="admin-stat-icon orange"><i class="fa-solid fa-address-book" aria-hidden="true"></i></span><div><strong id="totalContacts">0</strong><small>Contacts created</small></div></article>
+    </section>
+
+    <section class="admin-panel">
+      <div class="admin-panel-head"><div><h2>Registered accounts</h2><p id="userMeta">Loading accounts...</p></div><label class="admin-search"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><input id="userSearch" type="search" placeholder="Search name or email..."></label></div>
+      <div class="users-table-wrap">
+        <div class="users-table users-table-head"><span>USER</span><span>EMAIL</span><span>ROLE</span><span>CONTACTS</span><span>JOINED</span><span>ACTION</span></div>
+        <div id="userRows"></div>
+        <p class="admin-empty" id="emptyUsers" hidden>No users match your search.</p>
+      </div>
+    </section>
+    <div class="user-detail-backdrop" id="userDetailBackdrop" hidden><section class="user-detail-modal" role="dialog" aria-modal="true" aria-labelledby="detailTitle"><button class="close-user-detail" id="closeUserDetail" aria-label="Close"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button><p class="admin-eyebrow">ACCOUNT DETAILS</p><h2 id="detailTitle">User details</h2><div class="detail-avatar" id="detailAvatar">U</div><dl><div><dt>Name</dt><dd id="detailName"></dd></div><div><dt>Email</dt><dd id="detailEmail"></dd></div><div><dt>Role</dt><dd id="detailRole"></dd></div><div><dt>Joined</dt><dd id="detailJoined"></dd></div><div><dt>Contacts created</dt><dd id="detailContacts"></dd></div></dl></section></div>
+    <div class="delete-confirm-backdrop" id="deleteConfirmBackdrop" hidden><section class="delete-confirm-modal" role="dialog" aria-modal="true" aria-labelledby="deleteConfirmTitle"><button class="close-user-detail" id="closeDeleteConfirm" aria-label="Close"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button><p class="admin-eyebrow">CONFIRM ACTION</p><h2 id="deleteConfirmTitle">Delete account?</h2><p class="delete-confirm-copy">This account and its contacts will be permanently deleted.</p><div class="delete-confirm-user"><span class="admin-avatar small" id="deleteConfirmAvatar">U</span><span><strong id="deleteConfirmName"></strong><small id="deleteConfirmEmail"></small></span></div><div class="delete-confirm-actions"><button class="cancel-delete" id="cancelDelete" type="button">Cancel</button><button class="confirm-delete" id="confirmDelete" type="button"><i class="fa-solid fa-trash" aria-hidden="true"></i> Delete account</button></div></section></div>
+    <div class="admin-toast" id="adminToast" role="status"></div>
+  </main>
+
+  <script>
+    const users = [];
+    const rows = document.getElementById('userRows');
+    const search = document.getElementById('userSearch');
+    const toast = document.getElementById('adminToast');
+    const deleteConfirmBackdrop = document.getElementById('deleteConfirmBackdrop');
+    let pendingDeleteUser = null;
+
+    function initials(name) { return name.split(' ').map(part => part[0]).join('').slice(0, 2).toUpperCase(); }
+    function notify(message) { toast.textContent = message; toast.classList.add('visible'); setTimeout(() => toast.classList.remove('visible'), 2200); }
+    function render() {
+      const term = search.value.trim().toLowerCase();
+      const filtered = users.filter(user => `${user.name} ${user.email}`.toLowerCase().includes(term));
+      rows.innerHTML = filtered.map(user => `<div class="users-table user-row"><div class="admin-user"><span class="admin-avatar small">${initials(user.name)}</span><strong>${user.name}</strong></div><span class="user-email">${user.email}</span><span class="role-badge ${user.role}"><i class="fa-solid ${user.role === 'admin' ? 'fa-shield-halved' : 'fa-user'}" aria-hidden="true"></i>${user.role}</span><span class="contact-count">${user.contactCount}</span><span class="joined-date">${user.createdAt}</span><div class="user-actions"><button class="view-user" data-id="${user.id}" title="View user details" aria-label="View details for ${user.name}"><i class="fa-solid fa-eye" aria-hidden="true"></i></button>${user.role === 'admin' ? '<span class="protected-user"><i class="fa-solid fa-lock" aria-hidden="true"></i> Protected</span>' : `<button class="delete-user" data-id="${user.id}" title="Delete user" aria-label="Delete ${user.name}"><i class="fa-solid fa-trash" aria-hidden="true"></i></button>`}</div></div>`).join('');
+      document.getElementById('emptyUsers').hidden = filtered.length !== 0;
+      document.getElementById('userMeta').textContent = `${filtered.length} of ${users.length} account${users.length === 1 ? '' : 's'} shown`;
+      document.getElementById('totalUsers').textContent = users.length;
+      document.getElementById('adminUsers').textContent = users.filter(user => user.role === 'admin').length;
+      document.getElementById('regularUsers').textContent = users.filter(user => user.role === 'user').length;
+      document.getElementById('totalContacts').textContent = users.reduce((total, user) => total + Number(user.contactCount), 0);
+    }
+
+    function showUserDetails(user) {
+      document.getElementById('detailTitle').textContent = user.name;
+      document.getElementById('detailAvatar').textContent = initials(user.name);
+      document.getElementById('detailName').textContent = user.name;
+      document.getElementById('detailEmail').textContent = user.email;
+      document.getElementById('detailRole').textContent = user.role;
+      document.getElementById('detailJoined').textContent = user.createdAt;
+      document.getElementById('detailContacts').textContent = `${user.contactCount} contact${Number(user.contactCount) === 1 ? '' : 's'}`;
+      document.getElementById('userDetailBackdrop').hidden = false;
+    }
+
+    function showDeleteConfirmation(user) {
+      pendingDeleteUser = user;
+      document.getElementById('deleteConfirmAvatar').textContent = initials(user.name);
+      document.getElementById('deleteConfirmName').textContent = user.name;
+      document.getElementById('deleteConfirmEmail').textContent = user.email;
+      deleteConfirmBackdrop.hidden = false;
+    }
+
+    function closeDeleteConfirmation() {
+      pendingDeleteUser = null;
+      deleteConfirmBackdrop.hidden = true;
+    }
+
+    async function loadUsers() {
+      try {
+        const response = await fetch('/api/users');
+        if (!response.ok) throw new Error();
+        users.splice(0, users.length, ...(await response.json()));
+        render();
+      } catch (error) {
+        notify('Could not load users');
+        document.getElementById('userMeta').textContent = 'Unable to load accounts';
+      }
+    }
+
+    rows.onclick = async event => {
+      const viewButton = event.target.closest('.view-user');
+      if (viewButton) {
+        const user = users.find(item => item.id === Number(viewButton.dataset.id));
+        if (user) showUserDetails(user);
+        return;
+      }
+      const button = event.target.closest('.delete-user');
+      if (!button) return;
+      const user = users.find(item => item.id === Number(button.dataset.id));
+      if (!user) return;
+      showDeleteConfirmation(user);
+    };
+
+    document.getElementById('confirmDelete').onclick = async () => {
+      const user = pendingDeleteUser;
+      if (!user) return;
+      try {
+        const response = await fetch('/api/users', { method: 'DELETE', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ id: user.id }) });
+        if (!response.ok) throw new Error();
+        users.splice(users.indexOf(user), 1);
+        closeDeleteConfirmation();
+        render();
+        notify('User deleted');
+      } catch (error) {
+        notify('Could not delete user');
+      }
+    };
+    search.oninput = render;
+    document.getElementById('closeUserDetail').onclick = () => { document.getElementById('userDetailBackdrop').hidden = true; };
+    document.getElementById('userDetailBackdrop').onclick = event => { if (event.target.id === 'userDetailBackdrop') event.currentTarget.hidden = true; };
+    document.getElementById('closeDeleteConfirm').onclick = closeDeleteConfirmation;
+    document.getElementById('cancelDelete').onclick = closeDeleteConfirmation;
+    deleteConfirmBackdrop.onclick = event => { if (event.target === deleteConfirmBackdrop) closeDeleteConfirmation(); };
+    loadUsers();
+  </script>
+</body>
+</html>

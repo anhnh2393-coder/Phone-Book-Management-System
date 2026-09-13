@@ -9,16 +9,16 @@
 </head>
 <body class="contacts-page">
   <aside class="sidebar">
-    <div class="sidebar-brand"><span class="sidebar-logo">▣</span><span><strong>Phone Book</strong><small>Management System</small></span></div>
-    <div class="profile"><span class="avatar user-avatar">A</span><span><strong>admin</strong><small>admin@university.edu</small></span></div>
+    <div class="sidebar-brand"><span class="sidebar-logo"><i class="fa-solid fa-address-book" aria-hidden="true"></i></span><span><strong>Phone Book</strong><small>Management System</small></span></div>
+    <div class="profile"><span class="avatar user-avatar" data-account-initials>A</span><span><strong data-account-name>admin</strong><small data-account-email>admin@university.edu</small></span></div>
     <nav class="side-nav" aria-label="Main navigation">
-      <button class="side-link active" data-view="contacts"><span>♧</span>Contacts<b id="contactCount">8</b></button>
-      <button class="side-link" data-view="favorites"><span>☆</span>Favorites<b id="favoriteCount">4</b></button>
-      <button class="side-link" data-view="groups"><span>⊞</span>Groups</button>
-      <button class="side-link" data-view="statistics"><span>▥</span>Statistics</button>
-      <button class="side-link" data-view="about"><span>ⓘ</span>About</button>
+      <button class="side-link active" data-view="contacts"><span><i class="fa-solid fa-address-book" aria-hidden="true"></i></span>Contacts<b id="contactCount">8</b></button>
+      <button class="side-link" data-view="favorites"><span><i class="fa-regular fa-star" aria-hidden="true"></i></span>Favorites<b id="favoriteCount">4</b></button>
+      <button class="side-link" data-view="groups"><span><i class="fa-solid fa-table-cells" aria-hidden="true"></i></span>Groups</button>
+      <button class="side-link" data-view="statistics"><span><i class="fa-solid fa-chart-column" aria-hidden="true"></i></span>Statistics</button>
+      <button class="side-link" data-view="about"><span><i class="fa-solid fa-circle-info" aria-hidden="true"></i></span>About</button>
     </nav>
-    <div class="sidebar-footer"><a href="/login">↪ &nbsp;Logout</a><small>University Project - 2026</small></div>
+    <div class="sidebar-footer"><a href="/login"><i class="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i> Logout</a><small>University Project - 2026</small></div>
   </aside>
 
   <main class="contacts-main">
@@ -132,7 +132,7 @@
     }
 
     function renderAbout() {
-      viewContent.innerHTML = `<div class="about-stack"><article class="info-card about-intro"><span class="about-logo">▣</span><div><h2>Phone Book Management System</h2><p>University Project · 2026</p><span class="mini-tag">Version 1.0</span><span class="mini-tag green">Desktop Web App</span></div><hr><p>A complete desktop web application for managing personal and professional contacts. Built to demonstrate practical software engineering principles - CRUD operations, input validation, state management, authentication, and responsive desktop UI design.</p></article><article class="info-card account-card"><h3>LOGGED-IN ACCOUNT</h3><div class="account-row"><span class="avatar">A</span><span><strong>admin</strong><small>admin@university.edu</small></span></div></article><article class="info-card"><h3>SYSTEM FEATURES</h3><div class="feature-grid">${['Contact Management','Search & Filter','Favorites','Groups','Statistics','Validation & Duplicates','User Registration','Logout & Session'].map(feature => `<div><b>✓</b><span><strong>${feature}</strong><small>Manage and organize your phone book data with a clean interface.</small></span></div>`).join('')}</div></article><article class="info-card tech-card"><h3>TECHNICAL STACK</h3><div><span>HTML5</span><span>CSS3</span><span>JavaScript</span><span>C++ WinSock</span></div></article></div>`;
+      viewContent.innerHTML = `<div class="about-stack"><article class="info-card about-intro"><span class="about-logo">▣</span><div><h2>Phone Book Management System</h2><p>University Project · 2026</p><span class="mini-tag">Version 1.0</span><span class="mini-tag green">Desktop Web App</span></div><hr><p>A complete desktop web application for managing personal and professional contacts. Built to demonstrate practical software engineering principles - CRUD operations, input validation, state management, authentication, and responsive desktop UI design.</p></article><article class="info-card account-card"><h3>LOGGED-IN ACCOUNT</h3><div class="account-row"><span class="avatar" data-account-initials>A</span><span><strong data-account-name>admin</strong><small data-account-email>admin@university.edu</small></span></div></article><article class="info-card"><h3>SYSTEM FEATURES</h3><div class="feature-grid">${['Contact Management','Search & Filter','Favorites','Groups','Statistics','Validation & Duplicates','User Registration','Logout & Session'].map(feature => `<div><b>✓</b><span><strong>${feature}</strong><small>Manage and organize your phone book data with a clean interface.</small></span></div>`).join('')}</div></article><article class="info-card tech-card"><h3>TECHNICAL STACK</h3><div><span>HTML5</span><span>CSS3</span><span>JavaScript</span><span>C++ WinSock</span></div></article></div>`;
     }
 
     function switchView(view) {
@@ -181,6 +181,20 @@
       }
     }
 
+    async function loadCurrentUser() {
+      try {
+        const response = await fetch('/api/me');
+        if (!response.ok) return;
+        const user = await response.json();
+        const initials = user.name.split(' ').map(word => word[0]).join('').slice(0, 2).toUpperCase();
+        document.querySelectorAll('[data-account-name]').forEach(element => element.textContent = user.name);
+        document.querySelectorAll('[data-account-email]').forEach(element => element.textContent = user.email);
+        document.querySelectorAll('[data-account-initials]').forEach(element => element.textContent = initials);
+      } catch (error) {
+        notify('Could not load account details');
+      }
+    }
+
     document.getElementById('openAdd').onclick = () => showModal();
     document.getElementById('closeModal').onclick = hideModal;
     document.getElementById('cancelModal').onclick = hideModal;
@@ -195,14 +209,32 @@
       if (button.dataset.action === 'favorite') { contact.favorite = !contact.favorite; render(); }
       if (button.dataset.action === 'edit') showModal(contact);
       if (button.dataset.action === 'view') notify(`${contact.name} · ${contact.phone}`);
-      if (button.dataset.action === 'delete' && confirm(`Delete ${contact.name}?`)) { contacts.splice(contacts.indexOf(contact), 1); render(); notify('Contact deleted'); }
+      if (button.dataset.action === 'delete') deleteContact(contact);
     };
+    async function deleteContact(contact) {
+      try {
+        const response = await fetch('/api/contacts', { method: 'DELETE', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ id: contact.id }) });
+        if (!response.ok) throw new Error('Could not delete contact');
+        contacts.splice(contacts.indexOf(contact), 1);
+        render();
+        notify('Contact deleted');
+      } catch (error) {
+        notify('Could not delete contact');
+      }
+    }
     form.onsubmit = async event => {
       event.preventDefault();
       const id = Number(document.getElementById('contactId').value);
       const data = { name: document.getElementById('contactName').value, phone: document.getElementById('contactPhone').value, email: document.getElementById('contactEmail').value, group: document.getElementById('contactGroup').value };
       if (id) {
-        Object.assign(contacts.find(item => item.id === id), data);
+        try {
+          const response = await fetch('/api/contacts', { method: 'PUT', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ id, ...data }) });
+          if (!response.ok) throw new Error('Could not update contact');
+          Object.assign(contacts.find(item => item.id === id), data);
+        } catch (error) {
+          notify('Could not update contact');
+          return;
+        }
       } else {
         try {
           const response = await fetch('/api/contacts', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams(data) });
@@ -226,6 +258,7 @@
     document.querySelectorAll('.side-link').forEach(link => link.onclick = () => { document.querySelectorAll('.side-link').forEach(item => item.classList.remove('active')); link.classList.add('active'); switchView(link.dataset.view); });
     render();
     loadContacts();
+    loadCurrentUser();
   </script>
 </body>
 </html>

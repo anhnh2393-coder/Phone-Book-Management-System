@@ -41,7 +41,8 @@
         <div class="login-card">
           <h2>Welcome back</h2>
           <p class="subtitle">Sign in to access your phone book.</p>
-          <form action="/login" method="post" onsubmit="submitLogin(event)">
+          <div id="login-message" class="login-message" role="alert" hidden></div>
+          <form id="login-form" action="/login" method="post" onsubmit="submitLogin(event)">
             <label for="username">USERNAME OR EMAIL</label>
             <div class="input-box">
               <span aria-hidden="true">♙</span>
@@ -57,7 +58,6 @@
 
             <div class="form-options">
               <label class="remember"><input type="checkbox" name="remember"><span></span>Remember me</label>
-              <a href="#">Forgot password?</a>
             </div>
             <button class="submit-button" type="submit">Sign In</button>
           </form>
@@ -76,6 +76,25 @@
     function submitLogin(event) {
       if (window.location.port !== '8080') event.preventDefault();
     }
+
+    const loginMessage = document.getElementById('login-message');
+    const errorMessages = {
+      account: 'Tài khoản không tồn tại. Vui lòng kiểm tra lại tên tài khoản hoặc đăng ký tài khoản mới.',
+      password: 'Mật khẩu không đúng. Vui lòng thử lại.',
+      empty: 'Vui lòng nhập đầy đủ tên tài khoản và mật khẩu.',
+      admin: 'Bạn cần đăng nhập bằng tài khoản quản trị viên để truy cập trang này.'
+    };
+    const errorCode = new URLSearchParams(window.location.search).get('error');
+    if (errorCode && errorMessages[errorCode]) {
+      loginMessage.textContent = errorMessages[errorCode];
+      loginMessage.hidden = false;
+    }
+
+    document.querySelectorAll('#username, #password').forEach((input) => {
+      input.addEventListener('input', () => {
+        loginMessage.hidden = true;
+      });
+    });
   </script>
 </body>
 </html>
